@@ -1,10 +1,22 @@
 class env extends uvm_env;
   `uvm_component_utils(env)
 
-  env_cfg             cfg;
-  master_proto_module master_pm;
-  slave_proto_module  slave_pm;
-  scoreboard          scb;
+  env_cfg    cfg;
+  aw_master_agent aw_agent;
+  w_master_agent  w_agent;
+  ar_master_agent ar_agent;
+  b_master_agent  b_agent;
+  r_master_agent  r_agent;
+  master_virtual_sequencer vseqr;
+
+  aw_slave_agent aw_s_agent;
+  w_slave_agent  w_s_agent;
+  ar_slave_agent ar_s_agent;
+  b_slave_agent  b_s_agent;
+  r_slave_agent  r_s_agent;
+  slave_virtual_sequencer vseqr_s;
+
+  scoreboard scb;
 
   function new(string name = "env", uvm_component parent = null);
     super.new(name, parent);
@@ -16,25 +28,38 @@ class env extends uvm_env;
       `uvm_fatal("ENV", "Unable to get env_cfg from config_db")
     end
 
-    master_pm = master_proto_module::type_id::create("master_pm", this);
-    slave_pm  = slave_proto_module::type_id::create("slave_pm", this);
-    scb       = scoreboard::type_id::create("scb", this);
+    aw_agent = aw_master_agent::type_id::create("aw_agent", this);
+    w_agent  = w_master_agent::type_id::create("w_agent", this);
+    ar_agent = ar_master_agent::type_id::create("ar_agent", this);
+    b_agent  = b_master_agent::type_id::create("b_agent", this);
+    r_agent  = r_master_agent::type_id::create("r_agent", this);
+    vseqr    = master_virtual_sequencer::type_id::create("vseqr", this);
+
+    aw_s_agent = aw_slave_agent::type_id::create("aw_s_agent", this);
+    w_s_agent  = w_slave_agent::type_id::create("w_s_agent", this);
+    ar_s_agent = ar_slave_agent::type_id::create("ar_s_agent", this);
+    b_s_agent  = b_slave_agent::type_id::create("b_s_agent", this);
+    r_s_agent  = r_slave_agent::type_id::create("r_s_agent", this);
+    vseqr_s    = slave_virtual_sequencer::type_id::create("vseqr_s", this);
+
+    scb = scoreboard::type_id::create("scb", this);
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
 
-    slave_pm.vseqr.mem = cfg.mem;
+    vseqr_s.mem = cfg.mem;
 
-    master_pm.aw_agent.monitor.analysis_port.connect(scb.master_aw_imp);
-    slave_pm.aw_agent.monitor.analysis_port.connect(scb.slave_aw_imp);
-    master_pm.w_agent.monitor.analysis_port.connect(scb.master_w_imp);
-    slave_pm.w_agent.monitor.analysis_port.connect(scb.slave_w_imp);
-    master_pm.ar_agent.monitor.analysis_port.connect(scb.master_ar_imp);
-    slave_pm.ar_agent.monitor.analysis_port.connect(scb.slave_ar_imp);
-    master_pm.b_agent.monitor.analysis_port.connect(scb.master_b_imp);
-    slave_pm.b_agent.monitor.analysis_port.connect(scb.slave_b_imp);
-    master_pm.r_agent.monitor.analysis_port.connect(scb.master_r_imp);
-    slave_pm.r_agent.monitor.analysis_port.connect(scb.slave_r_imp);
+    aw_agent.monitor.analysis_port.connect(scb.master_aw_imp);
+    w_agent.monitor.analysis_port.connect(scb.master_w_imp);
+    ar_agent.monitor.analysis_port.connect(scb.master_ar_imp);
+    b_agent.monitor.analysis_port.connect(scb.master_b_imp);
+    r_agent.monitor.analysis_port.connect(scb.master_r_imp);
+
+    aw_s_agent.monitor.analysis_port.connect(scb.slave_aw_imp);
+    w_s_agent.monitor.analysis_port.connect(scb.slave_w_imp);
+    ar_s_agent.monitor.analysis_port.connect(scb.slave_ar_imp);
+    b_s_agent.monitor.analysis_port.connect(scb.slave_b_imp);
+    r_s_agent.monitor.analysis_port.connect(scb.slave_r_imp);
   endfunction
 endclass

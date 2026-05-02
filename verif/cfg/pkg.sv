@@ -63,8 +63,8 @@ package pkg;
   `include "../slave/agents/r_slave_agent.sv"
 
   `include "../env/scoreboard.sv"
-  `include "../top/master_proto_module.sv"
-  `include "../top/slave_proto_module.sv"
+  `include "../top/master_protocol_module.sv"
+  `include "../top/slave_protocol_module.sv"
   `include "../env/env.sv"
   `include "../vseq/master_vseq.sv"
   `include "../vseq/slave_vseq.sv"

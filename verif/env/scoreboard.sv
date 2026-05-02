@@ -36,6 +36,8 @@ class scoreboard extends uvm_component;
   r_tx slave_r_by_id[int unsigned][$];
   int unsigned read_beat_count[int unsigned];
 
+  bit [DATA_WIDTH - 1:0] write_data_by_addr[bit [ADDR_WIDTH - 1:0]];
+
   bit [1:0] sampled_awburst;
   bit [2:0] sampled_awsize;
   bit [7:0] sampled_awlen;
@@ -123,7 +125,8 @@ class scoreboard extends uvm_component;
                                  master_aw_by_id[t.wid].awsize,
                                  master_aw_by_id[t.wid].awburst,
                                  beat_idx);
-      cfg.mem.write_word(curr_beat_addr, t.wdata, t.wstrb);
+      // Store write data in scoreboard's own tracker instead of using cfg.mem
+      write_data_by_addr[curr_beat_addr] = t.wdata;
     end
   endfunction
 
@@ -185,7 +188,13 @@ class scoreboard extends uvm_component;
                                master_ar_by_id[t.rid].arsize,
                                master_ar_by_id[t.rid].arburst,
                                beat_idx);
-    exp_data = cfg.mem.read_word(curr_beat_addr);
+    
+    if (!write_data_by_addr.exists(curr_beat_addr)) begin
+      `uvm_error("SCB_R", $sformatf("No write data recorded for address %0h for RID %0d beat %0d", curr_beat_addr, t.rid, beat_idx))
+      exp_data = 'x;
+    end else begin
+      exp_data = write_data_by_addr[curr_beat_addr];
+    end
 
     if (t.rdata !== exp_data) begin
       `uvm_error("SCB_R", $sformatf("RDATA mismatch for RID %0d beat %0d exp=%0h act=%0h", t.rid, beat_idx, exp_data, t.rdata))
